@@ -1,8 +1,6 @@
 int NUMSTEPS = 60;
 
-class Integrator {
-
-  float attraction;
+class Integrator { 
   
   float _value, _start, _target;
   int _t;

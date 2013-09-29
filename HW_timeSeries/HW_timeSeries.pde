@@ -64,7 +64,7 @@ void setup() {
   for (int row = 0; row < rowCount; row++){
     float initialValue = data.getFloat(row, 0);
     interpolators[row] = new Integrator(initialValue);
-    interpolators[row].attraction = 0.1;
+    //interpolators[row].attraction = 0.1;
   }
 }
 
@@ -72,12 +72,12 @@ void keyPressed() {
   if (key == '[') {
     currentColumn--;
     if (currentColumn < 0) {
-      currentColumn = columnCount - 1;
+      currentColumn = columnCount; // This allows the summary page
     }
   } 
   else if (key == ']') {
     currentColumn++;
-    if (currentColumn == columnCount) {
+    if (currentColumn == columnCount+1) { // This allows the summary page
       currentColumn = 0;
     }
   }
@@ -95,19 +95,9 @@ void keyPressed() {
   }
 }
 
-void drawPointsEvent(){
-    background(255);
-    strokeWeight(5);
-    drawDataPoints(currentColumn);
-    
-}
-
 
 // draw loop (runs infinitely)
 void draw() {
-  // background color (light-grey)
-  background(255);
-
   // show the plot area as a white box
   //fill(255);
   //rectMode(CORNERS);
@@ -122,10 +112,8 @@ void draw() {
   //drawDataPoints(currentColumn);
   //noFill();
   //drawDataLine(currentColumn);
-  drawTitle();
-  drawAxisLabels();
-  drawVolumeLabels();
   
+    
   //strokeWeight(5);
   //drawDataPoints(currentColumn);
   //stroke(#5679C1);
@@ -135,53 +123,74 @@ void draw() {
   //drawDataBars(currentColumn);
   //drawDataArea(currentColumn);
   
-  drawYearLabels();
+  
+  // background color (light-grey)
+  background(255);
+  
+  
   drawTitleTabs();
+  drawAxisLabels();
+  drawVolumeLabels();
+  drawYearLabels();  
   
-  drawDataHighlight(currentColumn);
-  
-  // If 1 is pressed show dots
-  if (pressed == 1)
-  {  
-    strokeWeight(5);
-    // Draw the data for the first column
-    stroke(#5679C2);
-    drawDataPoints(currentColumn);
-  }
-  else if (pressed == 2){
-    // Draws dots
-    strokeWeight(5);
-    // Draw the data for the first column
-    stroke(#5679C2);
-    drawDataPoints(currentColumn);
+  // If the current column colunt is the column count, it is the summary tab
+  if (currentColumn == columnCount){
     
-    // draws line
-    noFill();
-    strokeWeight(1);
-    drawDataLine(currentColumn);
+    drawSummary();
   }
-  else if (pressed == 3){
-    noFill();
-    stroke(#5679C2);
-    strokeWeight(7);
-    drawDataLine(currentColumn);
-  }
-  else if (pressed == 4){
-   fill(#5679C1);
-  //drawDataBars(currentColumn);
-   drawDataArea(currentColumn);
-  }
-  else{
-    strokeWeight(5);
-    // Draw the data for the first column
-    stroke(#5679C2);
-    drawDataPoints(currentColumn);
+  else {
+    //drawTitle();
+
+    drawDataHighlight(currentColumn);
+    handleNumberEvent(currentColumn, #5679C2); 
+   
+    
+    for (int row = 0; row < rowCount; row++){
+      interpolators[row].update();
+    }
   }
   
-  for (int row = 0; row < rowCount; row++){
-    interpolators[row].update();
-  }
-  
+}
+
+void handleNumberEvent(int col, int _color){
+   // If 1 is pressed show dots
+   
+    if (pressed == 1)
+    {  
+      strokeWeight(5);
+      // Draw the data for the first column
+      stroke(_color);
+      drawDataPoints(col);
+    }
+    else if (pressed == 2){
+      // Draws dots
+      strokeWeight(5);
+      // Draw the data for the first column
+      stroke(_color);
+      drawDataPoints(col);
+      
+      // draws line
+      noFill();
+      strokeWeight(1);
+      drawDataLine(col);
+    }
+    else if (pressed == 3){
+      noFill();
+      stroke(_color);
+      strokeWeight(7);
+      drawDataLine(col);
+    }
+    else if (pressed == 4){
+     fill(_color);
+    //drawDataBars(currentColumn);
+     drawDataArea(col);
+    }
+    else{
+      strokeWeight(5);
+      // Draw the data for the first column
+      stroke(_color);
+      drawDataPoints(col);
+    }
 }
 
 void drawAxisLabels() {
@@ -201,13 +210,37 @@ void drawAxisLabels() {
 }
 
 
+void drawSummary(){
+  //print(columnCount);
+  int _color = 0;
+  for (int i = 0; i < columnCount; i++){
+    switch (i){
+      case 0:
+        _color = #0000FF;
+        break;
+      case 1:  
+        _color = #00FF00;
+        break;
+      case 2: 
+        _color = #FFFF00;
+        break;
+    }
+    
+    handleNumberEvent(i, _color);
+    drawDataHighlight(i);  
+  }
+}
+
+
 void drawDataPoints(int col) {
   for (int row = 0; row < rowCount; row++) {
     if (data.isValid(row, col)) {
+      
       float value = data.getFloat(row, col);
       //float value = interpolators[row].value;
       float x = map(years[row], yearMin, yearMax, plotX1, plotX2);
       float y = map(value, dataMin, dataMax, plotY2, plotY1);
+      //print("x: " + x + "| y:" + y + "\n");
       point(x, y);
     }
   }
@@ -233,13 +266,25 @@ void drawYearLabels() {
 }
 
 void drawTitle() {
-  fill(0);
-  textSize(30); // Personal Choice
-  textAlign(LEFT);
-  String title = data.getColumnName(currentColumn);
-  text(title, plotX1, plotY1-10);
-  plotFontTitle = createFont("Verdana", 20);
-  textFont(plotFontTitle);
+  
+  if (currentColumn == columnCount+1){
+    fill(0);
+    textSize(30); // Personal Choice
+    textAlign(LEFT);
+    String title = "Summary";
+    text(title, plotX1, plotY1-10);
+    plotFontTitle = createFont("Verdana", 20);
+    textFont(plotFontTitle);
+  }
+  else{
+    fill(0);
+    textSize(30); // Personal Choice
+    textAlign(LEFT);
+    String title = data.getColumnName(currentColumn);
+    text(title, plotX1, plotY1-10);
+    plotFontTitle = createFont("Verdana", 20);
+    textFont(plotFontTitle);
+  }
 }
 
 void drawVolumeLabels() {
@@ -329,6 +374,7 @@ void drawDataArea(int col){
   beginShape();
   for (int row = 0; row < rowCount; row++){
     if (data.isValid(row, col)){
+      //float value =  interpolators[row].value;
       float value = data.getFloat(row,col);
       float x = map(years[row], yearMin, yearMax, plotX1, plotX2);
       float y = map(value, dataMin, dataMax, plotY2, plotY1);
@@ -361,16 +407,22 @@ void drawTitleTabs(){
   textAlign(LEFT);
   
   if (tabLeft == null){
-    tabLeft = new float[columnCount];
-    tabRight = new float[columnCount];
+    tabLeft = new float[columnCount+1];
+    tabRight = new float[columnCount+1];
   }
   
   float runningX = plotX1;
   tabTop = plotY1 - textAscent() - 15;
   tabBottom = plotY1;
   
-  for (int col = 0; col < columnCount; col++){
-    String title = data.getColumnName(col);
+  for (int col = 0; col < columnCount+1; col++){
+    String title = "";
+    if (col == columnCount){
+      title = "Summary";
+    }
+    else{
+     title = data.getColumnName(col);
+    }
     tabLeft[col] = runningX;
     float titleWidth = textWidth(title);
     tabRight[col] = tabLeft[col] + tabPad + titleWidth + tabPad;
@@ -387,7 +439,7 @@ void drawTitleTabs(){
 
 void mousePressed(){
   if (mouseY > tabTop && mouseY < tabBottom){
-    for (int col = 0; col < columnCount; col++){
+    for (int col = 0; col < columnCount+1; col++){
       if (mouseX > tabLeft[col] && mouseX < tabRight[col]){
         setColumn(col);
       }
@@ -395,9 +447,18 @@ void mousePressed(){
   }
 }
 
+
 void setColumn(int col){
   if (col != currentColumn){
     currentColumn = col;
+  }
+}
+
+void setCurrent(int col){
+  currentColumn = col;
+  
+  for (int row = 0; row < rowCount; row++){
+    interpolators[row].target(data.getFloat(row,col));
   }
 }
 
